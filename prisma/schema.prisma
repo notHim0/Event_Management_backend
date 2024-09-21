@@ -12,3 +12,17 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+
+model Event {
+    id String @id @default(uuid())
+    name String
+    // rsvps User[]
+    type String
+    venue String
+    club_organisers String?
+    members String?
+    description String
+    thumbnail String?
+    timestamp DateTime?
+}

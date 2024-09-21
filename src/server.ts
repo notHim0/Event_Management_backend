@@ -4,8 +4,9 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import compression from "compression";
 
+import eventRouter from "./routers/eventRouter";
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(
   cors({
@@ -16,5 +17,9 @@ app.use(
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(compression());
+app.use(express.urlencoded({ extended: true }));
+
+//routers
+app.use(eventRouter);
 
 app.listen(port, () => console.log("Server is up and running..."));
