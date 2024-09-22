@@ -13,16 +13,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Role {
+  roleName    String @id @default("student")
+  accessLevel Int    @default(1)
+  user        User[]
+}
 
 model Event {
-    id String @id @default(uuid())
-    name String
-    // rsvps User[]
-    type String
-    venue String
-    club_organisers String?
-    members String?
-    description String
-    thumbnail String?
-    timestamp DateTime?
+  id              String    @id @default(uuid())
+  name            String
+  // rsvps User[]
+  type            String
+  venue           String
+  club_organisers String?
+  members         String?
+  description     String
+  thumbnail       String?
+  timestamp       DateTime?
+}
+
+model User {
+  collegeRegistrationID String  @id
+  firstName             String
+  lastName              String?
+  instituteName         String
+  password              String
+  degree                String
+  course                String
+  email                 String? @unique
+  phone                 String? @unique
+  role                  Role?    @relation(fields: [roleName], references: [roleName])
+  roleName              String
 }
