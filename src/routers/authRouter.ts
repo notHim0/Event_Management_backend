@@ -48,13 +48,13 @@ router.post("/signup", async (req, res) => {
         },
       });
 
-      return res.status(200).json({
+      res.status(200).json({
         status: "success",
         error: null,
         data: { code: "USER_REGISTERED" },
       });
     } else {
-      return res.status(409).json({
+      res.status(409).json({
         status: "error",
         error: {
           code: "USER_ALREADY_EXISTS",
@@ -64,7 +64,7 @@ router.post("/signup", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
+    res.status(500).json({
       status: "error",
       error: { code: "INTERNAL_SERVER_ERROR" },
       data: null,
@@ -100,7 +100,7 @@ router.post("/login", async (req, res) => {
           process.env.SECRET
         );
 
-        return res.status(200).json({
+        res.status(200).json({
           status: "sucess",
           error: null,
           data: {
@@ -114,7 +114,7 @@ router.post("/login", async (req, res) => {
       } else {
         // If wrong password
 
-        return res.status(401).json({
+        res.status(401).json({
           status: "error",
           error: {
             code: "WRONG_CREDENTIAL",
@@ -125,7 +125,7 @@ router.post("/login", async (req, res) => {
     } else {
       // If wrong regestrationID
 
-      return res.status(401).json({
+      res.status(401).json({
         status: "error",
         error: {
           code: "WRONG_CREDENTIAL",
@@ -135,7 +135,7 @@ router.post("/login", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
+    res.status(500).json({
       status: "error",
       error: { code: "INTERNAL_SERVER_ERROR" },
       data: null,

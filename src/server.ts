@@ -4,9 +4,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import compression from "compression";
 
+//import route handlers
 import eventRouter from "./routers/eventRouter";
 import userRoutes from "./routers/userRouter";
 import authRoutes from "./routers/authRouter";
+import clubRouter from "./routers/clubRouter";
 
 import { configDotenv } from "dotenv";
 configDotenv();
@@ -27,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 //routers
 app.use(eventRouter);
 app.use("/api/user", userRoutes);
-app.use("/api", authRoutes);
+// app.use("/api", authRoutes);
+app.use(clubRouter);
 
 app.listen(port, () => console.log("Server is up and running..."));

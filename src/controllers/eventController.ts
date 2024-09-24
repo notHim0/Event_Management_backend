@@ -1,25 +1,18 @@
 import { PrismaClient, Event } from "@prisma/client";
-import { NextFunction, response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
+import { eventSchema } from "../../utils/zodSchema";
 
 const prisma = new PrismaClient();
 
-export async function createEvent(req, res, next) {
+export async function createEvent(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   const formData: FormData = req.body;
-
-  const schema = z.object({
-    name: z.string().min(1),
-    type: z.string().min(1),
-    venue: z.string().min(1),
-    club_organisers: z.string().nullable().optional(),
-    members: z.string().nullable().optional(),
-    description: z.string(),
-    thumbnail: z.string().nullable().optional(),
-    timestamp: z.string().nullable().optional(),
-  });
-
   try {
-    const data: any = schema.parse({
+    const data: any = eventSchema.parse({
       name: formData["name"],
       type: formData["type"],
       venue: formData["venue"],
@@ -71,17 +64,17 @@ export async function listEvents(req, res, next) {
   }
 }
 
-export async function searchEventById(req, res, next) {
+export async function searchEventByParam(req, res, next) {
   const searchParam = req.body;
   try {
-    const eventById: Event = await prisma.event.findUnique({
-      where: { id: searchParam.id },
+    const eventByParam: Event = await prisma.event.findUnique({
+      where: searchParam,
     });
 
-    console.dir(eventById, { depth: null });
+    console.dir(eventByParam, { depth: null });
 
     res.status(200).json({
-      status: "error",
+      status: "success",
       error: null,
       data: { code: "FOUND_EVENT" },
     });
