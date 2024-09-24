@@ -1,6 +1,6 @@
 import { PrismaClient, Event } from "@prisma/client";
 import { NextFunction, response } from "express";
-import { AnyZodObject, EnumValues, z } from "zod";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
 
@@ -32,9 +32,18 @@ export async function createEvent(req, res, next) {
     await prisma.event.create({
       data,
     });
-    res.status(201).send(data);
-  } catch (e) {
-    res.status(404).send({ message: e });
+    res.status(201).json({
+      status: "success",
+      error: null,
+      data: { code: "EVENT_CREATED", message: "Event successfully created" },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
   }
 }
 
@@ -47,10 +56,18 @@ export async function listEvents(req, res, next) {
     }
 
     console.dir(events, { depth: null });
-
-    res.status(200).send(events);
-  } catch (e) {
-    res.status(404).send({ e });
+    res.status(200).json({
+      status: "error",
+      error: null,
+      data: { code: "ALL_EVENTS" },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
   }
 }
 
@@ -63,8 +80,17 @@ export async function searchEventById(req, res, next) {
 
     console.dir(eventById, { depth: null });
 
-    res.status(200).send(eventById);
-  } catch (e) {
-    res.status(500).send({ error: e });
+    res.status(200).json({
+      status: "error",
+      error: null,
+      data: { code: "FOUND_EVENT" },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
   }
 }
