@@ -13,17 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Roles{
-  STUDENT
-  PASSOUT
-  FACULTY
-}
 
 model Role {
   id String @id @default(uuid())
   roleName    String @default("student")
   accessLevel Int    @default(1)
-  // user        User[]
   clubs ClubRole[]
 }
 
@@ -33,7 +27,7 @@ model Event {
   // rsvps User[]
   type            String
   venue           String
-  club_id       String?
+  club_id         String?
   club_organisers Club? @relation(fields: [club_id], references: [id])
   members         String?
   description     String
@@ -51,10 +45,8 @@ model User {
   course                String
   email                 String? @unique
   phone                 String? @unique
-  // role                  Role?    @relation(fields: [roleName], references: [roleName])
   clubsAndRoles ClubRole[]
-  role Roles?
-  roleName              String
+
 }
 
 model Club {
@@ -77,5 +69,5 @@ model ClubRole {
   userId String
   user User @relation(fields: [userId], references: [collegeRegistrationID])
 
-  @@id([clubId, roleId])
+  @@id([clubId, userId])
 }

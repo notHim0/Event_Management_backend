@@ -28,8 +28,8 @@ app.use(express.urlencoded({ extended: true }));
 
 //routers
 app.use(eventRouter);
-app.use("/api/user", userRoutes);
-// app.use("/api", authRoutes);
+app.use(userRoutes);
+app.use(authRoutes);
 app.use(clubRouter);
 
 app.listen(port, () => console.log("Server is up and running..."));

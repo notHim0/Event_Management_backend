@@ -1,9 +1,11 @@
 import express from "express";
+import { checkAccessLevel, protectedRoutes } from "../middleware/middleware";
+import { editProfile } from "../controllers/userController";
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  console.log(req.body);
-});
+router
+  .route("/api/user/:userID/edit_profile")
+  .get(protectedRoutes, checkAccessLevel(2), editProfile);
 
 export default router;
