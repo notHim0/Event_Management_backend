@@ -8,11 +8,11 @@ export async function signup(req: Request, res: Response) {
   const formData: FormData = req.body;
 
   try {
-    if (
-      !(await prisma.user.findUnique({
-        where: { collegeRegistrationID: formData["collegeRegistrationID"] },
-      }))
-    ) {
+    const isRegistered = await prisma.user.findUnique({
+      where: { collegeRegistrationID: formData["collegeRegistrationID"] },
+    });
+
+    if (!isRegistered) {
       const hashedPassword = await bcrypt.hash(
         formData["password"],
         parseInt(process.env.SALT_ROUNDS)
@@ -30,13 +30,13 @@ export async function signup(req: Request, res: Response) {
         },
       });
 
-      return res.status(200).json({
+      res.status(200).json({
         status: "success",
         error: null,
         data: { code: "USER_REGISTERED" },
       });
     } else {
-      return res.status(409).json({
+      res.status(409).json({
         status: "error",
         error: {
           code: "USER_ALREADY_EXISTS",
@@ -80,7 +80,7 @@ export async function login(req: Request, res: Response) {
           {
             registrationID: user.collegeRegistrationID,
           },
-          process.env.SECRET,
+          "iamthebestateverything",
           {
             expiresIn: "30d",
           }
