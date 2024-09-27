@@ -17,3 +17,14 @@ export const clubSchema = z.object({
   description: z.string().min(1),
   acheivements: z.string().nullable().optional(),
 });
+
+export const clubRoleSchema = z.object({
+  clubId: z.string().min(1),
+  roleId: z.string().min(1),
+  userId: z.string().min(1),
+});
+
+export const roleSchema = z.object({
+  roleName: z.string().min(1),
+  accessLevel: z.number(),
+});

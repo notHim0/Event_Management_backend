@@ -18,7 +18,7 @@ model Role {
   id String @id @default(uuid())
   roleName    String @default("student")
   accessLevel Int    @default(1)
-  clubs ClubRole[]
+  clubs ClubRole[] 
 }
 
 model Event {

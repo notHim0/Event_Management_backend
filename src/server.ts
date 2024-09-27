@@ -9,6 +9,7 @@ import eventRouter from "./routers/eventRouter";
 import userRoutes from "./routers/userRouter";
 import authRoutes from "./routers/authRouter";
 import clubRouter from "./routers/clubRouter";
+import roleRouter from "./routers/roleRouter";
 
 import { configDotenv } from "dotenv";
 configDotenv();
@@ -31,5 +32,6 @@ app.use(eventRouter);
 app.use(userRoutes);
 app.use(authRoutes);
 app.use(clubRouter);
+app.use(roleRouter);
 
 app.listen(port, () => console.log("Server is up and running..."));
