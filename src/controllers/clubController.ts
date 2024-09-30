@@ -1,7 +1,8 @@
-import { PrismaClient, Club } from "@prisma/client";
+import { PrismaClient, Club, Role, ClubRole } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { clubSchema } from "../../utils/zodSchema";
-import { createPresident } from "./roleController";
+import { createPresident, initializeMember } from "./roleController";
+
 const prisma = new PrismaClient();
 
 export async function createClub(
@@ -26,6 +27,7 @@ export async function createClub(
     console.dir(club, { depth: null });
 
     createPresident(userId, club.id);
+    initializeMember(club.id);
 
     res.status(201).json({
       status: "success",
@@ -65,4 +67,77 @@ export async function listAllClubs(
       data: null,
     });
   }
+}
+
+export async function addMembers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { userId, clubId } = req.body;
+
+  try {
+    const role: Role = await prisma.role.create({
+      data: {
+        roleName: "Member",
+        accessLevel: 1,
+        clubId,
+        clubs: {
+          create: {
+            userId,
+            clubId,
+          },
+        },
+      },
+    });
+
+    const user = await prisma.user.update({
+      where: {
+        collegeRegistrationID: userId,
+      },
+      data: {
+        clubsAndRoles: {
+          connect: { clubId_userId: { clubId, userId } },
+        },
+      },
+    });
+    if (!user) throw new Error("patch not completed");
+
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: { code: "MEMBER_ADDED", message: "NEW MEMBER ADDED" },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
+  }
+}
+
+export async function assignRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  //incomplete
+  const { clubId, userId } = req.body;
+
+  const validUsers = await userId.map(async (user) => {
+    const validUser = await prisma.clubRole.findFirst({
+      where: {
+        userId: user,
+        clubId,
+      },
+    });
+
+    if (validUser) return validUser;
+  });
+
+  console.dir(validUsers, { depth: null });
+
+  res.status(200).send({ success: "yes" });
 }

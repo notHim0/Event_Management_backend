@@ -80,7 +80,7 @@ export async function login(req: Request, res: Response) {
           {
             registrationID: user.collegeRegistrationID,
           },
-          "iamthebestateverything",
+          process.env.SECRET,
           {
             expiresIn: "30d",
           }

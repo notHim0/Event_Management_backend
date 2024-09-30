@@ -9,15 +9,16 @@ export async function createRole(
   res: Response,
   next: NextFunction
 ) {
-  const { roleName, accessLevel } = req.body;
+  const { roleName, accessLevel, clubId } = req.body;
 
   try {
     const data = roleSchema.parse({
       roleName,
       accessLevel,
+      clubId,
     });
     const role = await prisma.role.create({
-      data,
+      data: { roleName, accessLevel, clubId },
     });
 
     console.dir(role);
@@ -66,9 +67,19 @@ export async function createPresident(userId, clubId) {
     data: {
       roleName: "President",
       accessLevel: 4,
+      clubId: clubId,
       clubs: {
         create: { userId, clubId },
       },
+    },
+  });
+}
+export async function initializeMember(clubId) {
+  await prisma.role.create({
+    data: {
+      roleName: "Member",
+      accessLevel: 1,
+      clubId,
     },
   });
 }

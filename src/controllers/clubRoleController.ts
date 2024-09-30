@@ -19,7 +19,7 @@ export default async function createClubRole(
     });
 
     const clubRole = await prisma.clubRole.create({
-      data,
+      data: { clubId, roleId, userId },
     });
 
     console.dir(clubRole, { depth: null });

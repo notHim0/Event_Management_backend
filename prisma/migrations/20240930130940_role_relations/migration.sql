@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Role" ALTER COLUMN "clubId" DROP NOT NULL;
