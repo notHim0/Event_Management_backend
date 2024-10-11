@@ -6,8 +6,9 @@ const prisma = new PrismaClient();
 
 export async function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.header("Authorization");
-    const decoded = jwt.verify(token, process.env.SECRET);
+    const token = req.header("Authorization").split(" ")[1];
+    console.log(token);
+    const decoded = jwt.verify(token, process.env.SALT_ROUNDS);
 
     const user = await prisma.user.findUnique({
       where: {
@@ -16,8 +17,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
     });
 
     if (!user) throw new Error("INTERNAL_ERROR");
-
-    req.body.userId = user.collegeRegistrationID;
+    req.body.userInfo = {id : user.collegeRegistrationID, instituteName : user.instituteName};
 
     next();
   } catch (error) {
@@ -40,6 +40,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
         },
       });
     }
+
     return res.status(401).json({
       status: "error",
       error: {
@@ -50,50 +51,50 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export async function checkAccessLevel(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const clubId = req.query.clubId.toString();
-  const { userId } = req.body;
-  console.log(clubId);
-  try {
-    const clubRole = await prisma.clubRole.findFirst({
-      where: {
-        clubId,
-        userId,
-      },
-    });
+// export async function checkAccessLevel(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) {
+//   const clubId = req.query.clubId.toString();
+//   const { userId } = req.body;
+  
+//   try {
+//     const clubRole = await prisma.clubRole.findFirst({
+//       where: {
+//         clubId,
+//         userId,
+//       },
+//     });
 
-    if (!clubRole) throw new Error("ACCESS DENIED");
+//     if (!clubRole) throw new Error("ACCESS DENIED");
 
-    const role = await prisma.role.findUnique({
-      where: {
-        id: clubRole.roleId,
-      },
-    });
+//     const role = await prisma.role.findUnique({
+//       where: {
+//         id: clubRole.roleId,
+//       },
+//     });
 
-    /*
+//     /*
 
-    use params to specify what action is going to be performed and check accordingly!!
+//     use params to specify what action is going to be performed and check accordingly!!
 
-    //role checking logic to be inserted here!!
+//     //role checking logic to be inserted here!!
 
 
 
-    */
-    if (!role) throw new Error("ACCESS DENIED");
+//     */
+//     if (!role) throw new Error("ACCESS DENIED");
 
-    next();
-  } catch (error) {
-    console.error(error);
-    res.status(401).json({
-      status: "error",
-      error: {
-        code: "ACCESS_DENIED",
-      },
-      data: null,
-    });
-  }
-}
+//     next();
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).json({
+//       status: "error",
+//       error: {
+//         code: "ACCESS_DENIED",
+//       },
+//       data: null,
+//     });
+//   }
+// }

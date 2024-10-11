@@ -35,6 +35,7 @@ export async function signup(req: Request, res: Response) {
         error: null,
         data: { code: "USER_REGISTERED" },
       });
+
     } else {
       res.status(409).json({
         status: "error",
@@ -67,8 +68,10 @@ export async function login(req: Request, res: Response) {
         },
       },
     });
+    console.log(formData);
 
-    console.log(user);
+
+
     if (user) {
       // If user exists
       const result = await bcrypt.compare(formData["password"], user.password);
@@ -80,7 +83,7 @@ export async function login(req: Request, res: Response) {
           {
             registrationID: user.collegeRegistrationID,
           },
-          process.env.SECRET,
+          process.env.SALT_ROUNDS,
           {
             expiresIn: "30d",
           }

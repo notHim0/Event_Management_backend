@@ -1,5 +1,5 @@
 import express from "express";
-import { checkAccessLevel, auth } from "../middleware/middleware";
+// import { checkAccessLevel, auth } from "../middleware/middleware";
 import { listUsers } from "../controllers/userController";
 
 const router = express.Router();

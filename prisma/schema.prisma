@@ -13,61 +13,97 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model Role {
-  id String @id @default(uuid())
-  roleName    String @default("student")
-  accessLevel Int    @default(1)
-  clubId String?
-  clubs ClubRole[] 
+  id          String         @id @default(uuid())
+  roleName    String         @default("member")
+  accessLevel Int            @default(1)
+  clubs       UserClubRole[]
+  ClubRole    ClubRole[]
 }
 
 model Event {
-  id              String    @id @default(uuid())
-  name            String
-  // rsvps User[]
-  type            String
-  venue           String
-  club_id         String?
-  club_organisers Club? @relation(fields: [club_id], references: [id])
-  members         String?
-  description     String
-  thumbnail       String?
-  timestamp       DateTime?
+  id                    String      @id @default(uuid())
+  name                  String
+  description           String
+  instituteName         String
+  created_at            DateTime    @default(now())
+  type                  String
+  venue                 String
+  club_id               String?
+  organiser             Club?       @relation(fields: [club_id], references: [id])
+  thumbnail             String?
+  UserEvent             UserEvent[]
+  Rounds                Rounds[]
+  registration_deadline DateTime
+  registration_limit    Int
+}
+
+model Rounds {
+  id          String   @id @default(uuid())
+  name        String
+  start_time  DateTime
+  end_time    DateTime
+  description String
+  venue       String?
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String
 }
 
 model User {
-  collegeRegistrationID String  @id 
+  collegeRegistrationID String         @id
   firstName             String
   lastName              String?
-  instituteName         String
   password              String
+  instituteName         String
   degree                String
   course                String
-  email                 String? @unique
-  phone                 String? @unique
-  clubsAndRoles ClubRole[]
-
+  email                 String?        @unique
+  phone                 String?        @unique
+  clubsAndRoles         UserClubRole[]
+  UserEvent             UserEvent[]
 }
 
 model Club {
-  id String @id @default(uuid())
-  name String @unique
-  description String
-  events Event[]
-  acheivements String?
-  roles ClubRole[]
+  id            String         @id @default(uuid())
+  name          String         @unique
+  description   String
+  events        Event[]
+  userAndRoles  UserClubRole[]
+  instituteName String
+  created_at    DateTime       @default(now())
+  club_banner   String?
+  club_logo     String?
+  ClubRole      ClubRole[]
+}
+
+model UserClubRole {
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [collegeRegistrationID])
+
+  @@id([clubId, userId])
 }
 
 model ClubRole {
   clubId String
-  club Club @relation(fields: [clubId], references: [id])
-
   roleId String
-  role Role @relation(fields: [roleId], references: [id])
+  club   Club   @relation(fields: [clubId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
 
-  userId String
-  user User @relation(fields: [userId], references: [collegeRegistrationID])
+  @@id([clubId, roleId])
+}
 
-  @@id([clubId, userId])
+model UserEvent {
+  userID String
+  user   User   @relation(fields: [userID], references: [collegeRegistrationID])
+
+  eventID String
+  event   Event  @relation(fields: [eventID], references: [id])
+
+  @@id([userID, eventID])
 }

@@ -13,9 +13,7 @@ export const eventSchema = z.object({
 
 export const clubSchema = z.object({
   name: z.string().min(1),
-  members: z.string().nullable().optional(),
   description: z.string().min(1),
-  acheivements: z.string().nullable().optional(),
 });
 
 export const clubRoleSchema = z.object({
