@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import express, { Request, Response } from "express";
@@ -35,7 +35,6 @@ export async function signup(req: Request, res: Response) {
         error: null,
         data: { code: "USER_REGISTERED" },
       });
-
     } else {
       res.status(409).json({
         status: "error",
@@ -58,19 +57,12 @@ export async function signup(req: Request, res: Response) {
 export async function login(req: Request, res: Response) {
   const formData: FormData = req.body;
   try {
-    const user = await prisma.user.findUnique({
+    const user: User = await prisma.user.findUnique({
       where: {
         collegeRegistrationID: formData["collegeRegistrationID"],
       },
-      include: {
-        clubsAndRoles: {
-          include: { club: true, role: true },
-        },
-      },
     });
     console.log(formData);
-
-
 
     if (user) {
       // If user exists

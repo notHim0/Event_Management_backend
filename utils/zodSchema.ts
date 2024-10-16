@@ -14,6 +14,7 @@ export const eventSchema = z.object({
 export const clubSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
+  instituteName: z.string().min(1),
 });
 
 export const clubRoleSchema = z.object({
