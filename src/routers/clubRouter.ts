@@ -1,7 +1,7 @@
 import {
   addMembers,
   // addMembers,
-  // assignRole,
+  assignRole,
   createClub,
   joinClub,
   listAllClubs,
@@ -15,8 +15,6 @@ router.route("/api/create_club").post(auth, createClub);
 router.route("/api/list_all_clubs").get(auth, listAllClubs);
 router.route("/api/club/:clubID/join").post(auth, joinClub);
 router.route("/api/club/add_members").patch(auth, addMembers);
-
-// router.route("/api/club/add_members").patch(auth, addMembers);
-// router.route("/api/club/assign_role").post(assignRole);
+router.route("/api/club/assign_role").post(assignRole);
 
 export default router;

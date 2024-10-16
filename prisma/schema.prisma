@@ -86,7 +86,7 @@ model UserClubRole {
   userId String
   user   User   @relation(fields: [userId], references: [collegeRegistrationID])
 
-  @@id([clubId, userId])
+  @@id([clubId, userId, roleId])
 }
 
 model ClubRole {

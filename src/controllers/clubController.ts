@@ -184,7 +184,7 @@ export async function addMembers(
       },
       data: {
         clubsAndRoles: {
-          connect: { clubId_userId: { clubId, userId } },
+          connect: { clubId_userId_roleId: { clubId, userId, roleId } },
         },
       },
     });
@@ -205,26 +205,55 @@ export async function addMembers(
   }
 }
 
-// export async function assignRole(
-//   req: Request,the associated role, only the 'id' field is s
-//   res: Response,
-//   next: NextFunction
-// ) {
-//   //incomplete
-//   const { clubId, userId } = req.body;
+export async function assignRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { clubId, userId, roleId } = req.body;
 
-//   const validUsers = await userId.map(async (user) => {
-//     const validUser = await prisma.clubRole.findFirst({
-//       where: {
-//         userId: user,
-//         clubId,
-//       },
-//     });
+  try {
+    const validUsers = await Promise.all(
+      await userId.map(async (user) => {
+        return await prisma.user.findUnique({
+          where: {
+            collegeRegistrationID: user,
+          },
+          select: {
+            collegeRegistrationID: true,
+          },
+        });
+      })
+    );
 
-//     if (validUser) return validUser;
-//   });
+    if (!validUsers) throw new Error("INVALID_USERS");
 
-//   console.dir(validUsers, { depth: null });
+    await Promise.all(
+      await validUsers.map(async (user) => {
+        return await prisma.userClubRole.create({
+          data: {
+            clubId,
+            userId: user.collegeRegistrationID,
+            roleId,
+          },
+        });
+      })
+    );
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: {
+        code: "ROLE_ASSIGNED",
+        message: "ROLES ASSIGNED TO SELECTED MEMBERES",
+      },
+    });
+  } catch (error) {
+    console.error(error);
 
-//   res.status(200).send({ success: "yes" });
-// }
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
+  }
+}
