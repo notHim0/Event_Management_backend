@@ -26,5 +26,4 @@ export const clubRoleSchema = z.object({
 export const roleSchema = z.object({
   roleName: z.string().min(1),
   accessLevel: z.number(),
-  clubId: z.string().min(1),
 });

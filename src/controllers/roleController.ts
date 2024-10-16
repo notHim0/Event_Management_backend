@@ -4,40 +4,48 @@ import { roleSchema } from "../../utils/zodSchema";
 
 const prisma = new PrismaClient();
 
-// export async function createRole(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) {
-//   const { roleName, accessLevel, clubId } = req.body;
+export async function createRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { roleName, accessLevel, clubId } = req.body;
 
-//   try {
-//     const data = roleSchema.parse({
-//       roleName,
-//       accessLevel,
-//       clubId,
-//     });
-//     const role = await prisma.role.create({
-//       data: { roleName, accessLevel, clubId },
-//     });
+  try {
+    const data = roleSchema.parse({
+      roleName,
+      accessLevel,
+    });
 
-//     console.dir(role);
+    const role = await prisma.role.create({
+      data: { roleName, accessLevel },
+    });
 
-//     res.status(200).json({
-//       status: "success",
-//       error: null,
-//       data: { code: "ROLE_CREATED" },
-//     });
-//   } catch (error) {
-//     console.error(error);
+    await prisma.clubRole.create({
+      data: {
+        clubId,
+        roleId: role.id,
+      },
+    });
 
-//     res.status(501).json({
-//       status: "error",
-//       error: { code: "INTERNAL_ERROR" },
-//       data: null,
-//     });
-//   }
-// }
+    console.dir(role);
+
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: { code: "ROLE_CREATED" },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(501).json({
+      status: "error",
+      error: { code: "INTERNAL_ERROR" },
+      data: null,
+    });
+  }
+}
+
 // export async function listRoles(
 //   req: Request,
 //   res: Response,
