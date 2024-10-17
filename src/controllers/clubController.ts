@@ -158,8 +158,12 @@ export async function addMembers(
   res: Response,
   next: NextFunction
 ) {
-  const { userId, clubId } = req.body;
+  //ids for querying
+  const { clubId } = req.body;
+  const userId = req.body.userInfo.id;
+  //be sure to also send the roleId since this is a protected route
 
+  //destructuring the roleId, since that is all we need from the role model
   const { roleId } = await prisma.clubRole.findFirst({
     where: { clubId, role: { roleName: "Member" } },
     select: {
@@ -170,6 +174,7 @@ export async function addMembers(
   try {
     if (!roleId) throw new Error("UNABLE TO ADD MEMBER");
 
+    //creating an entry in the junction table for the new member
     await prisma.userClubRole.create({
       data: {
         clubId,
@@ -177,18 +182,6 @@ export async function addMembers(
         userId,
       },
     });
-
-    const user = await prisma.user.update({
-      where: {
-        collegeRegistrationID: userId,
-      },
-      data: {
-        clubsAndRoles: {
-          connect: { clubId_userId_roleId: { clubId, userId, roleId } },
-        },
-      },
-    });
-    if (!user) throw new Error("patch not completed");
 
     res.status(200).json({
       status: "success",
@@ -211,8 +204,14 @@ export async function assignRole(
   next: NextFunction
 ) {
   const { clubId, userId, roleId } = req.body;
+  /*
+    * userId here is an array of all the users that you want 
+      assign roles 
 
+    * be sure to send the roleId as well since this is a protected route
+  */
   try {
+    //we first check if the user IDs are valid users
     const validUsers = await Promise.all(
       await userId.map(async (user) => {
         return await prisma.user.findUnique({
@@ -228,6 +227,7 @@ export async function assignRole(
 
     if (!validUsers) throw new Error("INVALID_USERS");
 
+    //now we assign roles and create a entry in our junction table
     await Promise.all(
       await validUsers.map(async (user) => {
         return await prisma.userClubRole.create({
@@ -257,3 +257,5 @@ export async function assignRole(
     });
   }
 }
+
+export async function update() {}
