@@ -15,7 +15,7 @@ datasource db {
 
 model Role {
   id          String         @id @default(uuid())
-  roleName    String         @default("member")
+  roleName    String         @default("Member")
   accessLevel Int            @default(1)
   clubs       UserClubRole[]
   ClubRole    ClubRole[]

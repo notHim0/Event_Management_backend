@@ -3,7 +3,7 @@ import { NextFunction, query, Request, Response } from "express";
 import jwt, { decode } from "jsonwebtoken";
 
 //importing route access levels
-import { clubRoutesAccessLevels } from "../../utils/routeAccessLevels";
+import routesAccessLevels from "../../utils/routeAccessLevels";
 
 const prisma = new PrismaClient();
 
@@ -92,7 +92,7 @@ export async function checkAccessLevel(
     if (!role) throw new Error("ACCESS DENIED");
 
     //checking accessLevel according to route trying to access
-    if (role.accessLevel < clubRoutesAccessLevels[req.route.path])
+    if (role.accessLevel < routesAccessLevels[req.route.path])
       throw new Error("ACCESS_DENIED");
 
     next();

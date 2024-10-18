@@ -12,15 +12,18 @@ export async function createRole(
   const { roleName, accessLevel, clubId } = req.body;
 
   try {
+    //validating user data
     const data = roleSchema.parse({
       roleName,
       accessLevel,
     });
 
+    //creating role
     const role = await prisma.role.create({
       data: { roleName, accessLevel },
     });
 
+    //adding the role in junction table
     await prisma.clubRole.create({
       data: {
         clubId,
@@ -46,50 +49,49 @@ export async function createRole(
   }
 }
 
-// export async function listRoles(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) {
-//   try {
-//     const roles = await prisma.role.findMany();
+export async function listRoles(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { clubId } = req.body;
+  try {
+    //getting the list of role IDs in the club
+    const rolesId = await prisma.clubRole.findMany({
+      where: {
+        clubId,
+      },
+      select: {
+        roleId: true,
+      },
+    });
 
-//     console.dir(roles, { depth: null });
+    //fetching their data
+    const roles = await Promise.all(
+      rolesId.map(async (role) => {
+        return await prisma.role.findFirst({
+          where: { id: role.roleId },
+          select: {
+            roleName: true,
+            accessLevel: true,
+          },
+        });
+      })
+    );
 
-//     res.status(201).json({
-//       status: "success",
-//       error: null,
-//       data: { code: "ROLES_LISTED", message: "ALL ROLES LISTED" },
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({
-//       status: "error",
-//       error: { code: "INTERNAL_SERVER_ERROR" },
-//       data: null,
-//     });
-//   }
-// }
+    console.dir(roles);
 
-// export async function createPresident(userId : string, clubId : string) {
-//   const role = await prisma.role.create({
-//     data: {
-//       roleName: "President",
-//       accessLevel: 4,
-//       // clubId: clubId, Not sure why this is necessary!
-//       clubs: {
-//         create: { userId, clubId },
-//       },
-//     },
-//   });
-// }
-
-// export async function initializeMember(clubId) {
-//   await prisma.role.create({
-//     data: {
-//       roleName: "Volunteer",
-//       accessLevel: 1,
-//       clubId,
-//     },
-//   });
-// }
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: { code: "ROLES_LISTED", message: "ALL ROLES LISTED" },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
+  }
+}
