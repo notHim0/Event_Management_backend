@@ -70,8 +70,7 @@ export async function checkAccessLevel(
   //extracting data
   const clubId = req.query.clubId.toString();
   const userId = req.body.userInfo.id;
-  const { roleId } = req.body;
-
+  const roleId = req.query.roleId.toString();
   try {
     //verifying the role to check access level
     const clubRole = await prisma.userClubRole.findFirst({
@@ -92,7 +91,10 @@ export async function checkAccessLevel(
     if (!role) throw new Error("ACCESS DENIED");
 
     //checking accessLevel according to route trying to access
-    if (role.accessLevel < routesAccessLevels[req.route.path])
+    if (
+      routesAccessLevels[req.route.path] != undefined &&
+      role.accessLevel < routesAccessLevels[req.route.path]
+    )
       throw new Error("ACCESS_DENIED");
 
     next();

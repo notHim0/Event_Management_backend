@@ -2,7 +2,6 @@ import { PrismaClient, Club, Role } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { clubSchema } from "../../utils/zodSchema";
-// import { createPresident, initializeMember } from "./roleController";
 
 const prisma = new PrismaClient();
 
@@ -208,7 +207,7 @@ export async function assignRole(
     * userId here is an array of all the users that you want 
       assign roles 
 
-    * be sure to send the roleId as well since this is a protected route
+    * be sure to send the roleId as a query since this is a protected route
   */
   try {
     //we first check if the user IDs are valid users
@@ -245,6 +244,86 @@ export async function assignRole(
       data: {
         code: "ROLE_ASSIGNED",
         message: "ROLES ASSIGNED TO SELECTED MEMBERES",
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
+  }
+}
+
+export async function removeMember(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { clubId, userId } = req.body;
+
+  try {
+    await prisma.userClubRole.deleteMany({
+      where: {
+        clubId,
+        userId,
+      },
+    });
+
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: {
+        code: "MEMBER_REMOVED",
+        message: "CLUB MEMBER REMOVED FROM CLUB",
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+      data: null,
+    });
+  }
+}
+
+export async function unassignRole(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const { clubId, userId, roleId } = req.body;
+
+  // be sure to send the roleId as a query since this is a protected route
+
+  try {
+    //we first check if the user ID is a valid user
+    const validUser = await prisma.user.findUnique({
+      where: { collegeRegistrationID: userId },
+    });
+
+    if (!validUser) throw new Error("INVALID_USERS");
+
+    //now we delete this record from our junction table
+    await prisma.userClubRole.delete({
+      where: {
+        clubId_userId_roleId: {
+          clubId,
+          roleId,
+          userId,
+        },
+      },
+    });
+
+    res.status(200).json({
+      status: "success",
+      error: null,
+      data: {
+        code: "ROLE_UNASSIGNED",
+        message: "ROLE WAS REMOVED FROM SELECTED MEMBER",
       },
     });
   } catch (error) {
