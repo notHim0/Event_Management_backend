@@ -1,7 +1,8 @@
 import { PrismaClient, Club, Role } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { clubSchema } from "../../utils/zodSchema";
+import { clubSchema } from "../utils/zodSchema";
+import AppError from "../AppError";
 
 const prisma = new PrismaClient();
 
@@ -10,84 +11,71 @@ export async function createClub(
   res: Response,
   next: NextFunction
 ) {
-  const formData: FormData = req.body;
-  try {
-    const club: Club = await prisma.club.findFirst({
-      where: {
-        name: formData["name"],
+  const { name, description } = req.body;
+
+  const club: Club = await prisma.club.findFirst({
+    where: {
+      name: name,
+    },
+  });
+
+  if (!club) {
+    // RoleID for presidenRole;
+    const presideRoleID = uuidv4();
+
+    //validate the user inputed data
+    const data: any = clubSchema.parse({
+      name: name,
+      description: description,
+      instituteName: req.body.userInfo["instituteName"],
+    });
+
+    //Creates CLub and Initializes it with generic Roles
+    const newClub: Club = await prisma.club.create({
+      data: {
+        ...data,
+        ClubRole: {
+          create: [
+            {
+              role: {
+                create: {
+                  roleName: "President",
+                  id: presideRoleID,
+                  accessLevel: 100,
+                },
+              },
+            },
+            {
+              role: {
+                create: {
+                  roleName: "Member",
+                  accessLevel: 1,
+                },
+              },
+            },
+          ],
+        },
       },
     });
 
-    if (!club) {
-      // RoleID for presidenRole;
-      const presideRoleID = uuidv4();
-
-      //validate the user inputed data
-      const data = clubSchema.parse({
-        name: formData["name"],
-        description: formData["description"],
-        instituteName: formData["instituteName"],
-      });
-
-      //Creates CLub and Initializes it with generic Roles
-      const newClub: Club = await prisma.club.create({
-        data: {
-          name: formData["name"],
-          description: formData["description"],
-          instituteName: formData["instituteName"],
-          ClubRole: {
-            create: [
-              {
-                role: {
-                  create: {
-                    roleName: "President",
-                    id: presideRoleID,
-                    accessLevel: 100,
-                  },
-                },
-              },
-              {
-                role: {
-                  create: {
-                    roleName: "Member",
-                    accessLevel: 1,
-                  },
-                },
-              },
-            ],
-          },
-        },
-      });
-
-      // Assigns President Pole to User
-      await prisma.userClubRole.create({
-        data: {
-          clubId: newClub.id,
-          userId: req.body["userInfo"].id,
-          roleId: presideRoleID,
-        },
-      });
-
-      return res.status(200).json({
-        status: "success",
-        data: { code: "CLUB_CREATED" },
-        errror: null,
-      });
-    }
-
-    return res.status(409).json({
-      status: "error",
-      error: { code: "CLUB_ALREADY_EXISTS" },
-      data: null,
+    // Assigns President Role to User
+    await prisma.userClubRole.create({
+      data: {
+        clubId: newClub.name,
+        userId: req.body["userInfo"].id,
+        roleId: presideRoleID,
+      },
     });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      status: "error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
-      data: null,
+
+    return res.status(200).json({
+      status: "success",
+      data: { code: "CLUB_CREATED" },
+      errror: null,
     });
   }
+
+  throw new AppError("A club with this name already exists", "CLUB_ALREADY_EXISTS", 409);
+
 }
 
 export async function listAllClubs(
@@ -95,28 +83,46 @@ export async function listAllClubs(
   res: Response,
   next: NextFunction
 ) {
-  // const formdata: FormData = req.body;
-  console.log(req.body.userInfo);
-  try {
-    const clubs = await prisma.club.findMany({
-      where: {
-        instituteName: req.body["userInfo"].instituteName,
-      },
-    });
 
-    res.status(201).json({
-      status: "success",
-      error: null,
-      data: { code: "CLUB_LIST", clubs: clubs },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
-      data: null,
-    });
-  }
+  console.log("listing all clubs");
+
+  const clubs = await prisma.club.findMany({
+    where: {
+      instituteName: req.body["userInfo"].instituteName,
+    },
+  });
+
+
+  res.status(200).json({
+    status: "success",
+    error: null,
+    data: { code: "CLUB_LIST", clubs: clubs },
+  });
+
+}
+
+export async function listAllJoinedClubs(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+
+  const clubs = await prisma.userClubRole.findMany({
+    where: {
+      userId: req.body["userInfo"].id,
+    },
+    select: {
+      club: true,
+      role: true,
+    }
+  });
+
+  res.status(200).json({
+    status: "success",
+    error: null,
+    data: { code: "CLUB_LIST", clubs: clubs },
+  });
+
 }
 
 export async function joinClub(
@@ -124,32 +130,40 @@ export async function joinClub(
   res: Response,
   next: NextFunction
 ) {
-  try {
-    const { clubId } = req.params;
+  let { clubId } = req.query;
+  clubId = clubId as string;
 
-    const { roleId } = await prisma.clubRole.findFirst({
-      where: {
-        clubId,
-        role: {
-          roleName: "Member",
-        },
+
+  // console.log(clubId);
+
+  const { roleId } = await prisma.clubRole.findFirst({
+    where: {
+      clubId,
+      role: {
+        roleName: "Member",
       },
+    },
 
-      select: {
-        roleId: true,
-      },
-    });
+    select: {
+      roleId: true,
+    },
+  });
 
-    await prisma.userClubRole.create({
-      data: {
-        userId: req.body["serInfo"].id,
-        clubId,
-        roleId,
-      },
-    });
+  await prisma.userClubRole.create({
+    data: {
+      userId: req.body["serInfo"].id,
+      clubId,
+      roleId,
+    },
+  });
 
-    return res.status(200);
-  } catch (error) {}
+  return res.status(200).json({
+    status: "success",
+    data: null,
+    error: null,
+  });
+
+
 }
 
 export async function addMembers(
@@ -337,4 +351,4 @@ export async function unassignRole(
   }
 }
 
-export async function update() {}
+export async function update() { }

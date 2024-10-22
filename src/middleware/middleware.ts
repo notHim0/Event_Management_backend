@@ -3,7 +3,7 @@ import { NextFunction, query, Request, Response } from "express";
 import jwt, { decode } from "jsonwebtoken";
 
 //importing route access levels
-import routesAccessLevels from "../../utils/routeAccessLevels";
+import routesAccessLevels from "../utils/routeAccessLevels";
 
 const prisma = new PrismaClient();
 
@@ -12,9 +12,10 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
     //extracting the jwt token form header
     const token = req.header("Authorization");
 
-    //verifying the token
-    const decoded = jwt.verify(token, process.env.SALT_ROUNDS);
 
+    //verifying the token
+    const decoded = jwt.verify(token.split(" ")[1], process.env.SALT_ROUNDS);
+    console.log(decoded);
     //verifying the user
     const user = await prisma.user.findUnique({
       where: {
@@ -22,7 +23,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
       },
     });
 
-    if (!user) throw new Error("INTERNAL_ERROR");
+    if (!user) throw new Error();
 
     //appending data to body for later use
     req.body.userInfo = {
@@ -32,6 +33,7 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
 
     next();
   } catch (error) {
+    
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         status: "error",
@@ -40,8 +42,8 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
           message: "Your session has expired. Please log in again.",
         },
       });
-    }
-
+    } 
+    
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({
         status: "error",
@@ -52,13 +54,8 @@ export async function auth(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    return res.status(401).json({
-      status: "error",
-      error: {
-        code: "AUTH_FAILED",
-        message: "Authorization failed.",
-      },
-    });
+    next(error);
+
   }
 }
 

@@ -1,6 +1,6 @@
 import { PrismaClient, Event } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
-import { eventSchema } from "../../utils/zodSchema";
+import { eventSchema } from "../utils/zodSchema";
 
 const prisma = new PrismaClient();
 
@@ -21,9 +21,11 @@ export async function createEvent(
       thumbnail: formData["thumbnail"],
       timestamp: formData["timestamp"],
     });
+
     await prisma.event.create({
       data,
     });
+    
     res.status(201).json({
       status: "success",
       error: null,

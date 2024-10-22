@@ -12,6 +12,7 @@ import clubRouter from "./routers/clubRouter";
 import roleRouter from "./routers/roleRouter";
 
 import { configDotenv } from "dotenv";
+import errorHandler from "./middleware/errorHandler";
 configDotenv();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -34,4 +35,6 @@ app.use(authRoutes);
 app.use(clubRouter);
 app.use(roleRouter);
 
+
+app.use(errorHandler);
 app.listen(port, () => console.log("Server is up and running..."));

@@ -30,7 +30,7 @@ model Event {
   type                  String
   venue                 String
   club_id               String?
-  organiser             Club?       @relation(fields: [club_id], references: [id])
+  organiser             Club?       @relation(fields: [club_id], references: [name])
   thumbnail             String?
   UserEvent             UserEvent[]
   Rounds                Rounds[]
@@ -64,8 +64,7 @@ model User {
 }
 
 model Club {
-  id            String         @id @default(uuid())
-  name          String         @unique
+  name          String         @id
   description   String
   events        Event[]
   userAndRoles  UserClubRole[]
@@ -78,10 +77,10 @@ model Club {
 
 model UserClubRole {
   clubId String
-  club   Club   @relation(fields: [clubId], references: [id])
+  club   Club   @relation(fields: [clubId], references: [name])
 
   roleId String
-  role   Role   @relation(fields: [roleId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   userId String
   user   User   @relation(fields: [userId], references: [collegeRegistrationID])
@@ -92,8 +91,8 @@ model UserClubRole {
 model ClubRole {
   clubId String
   roleId String
-  club   Club   @relation(fields: [clubId], references: [id])
-  role   Role   @relation(fields: [roleId], references: [id])
+  club   Club   @relation(fields: [clubId], references: [name], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([clubId, roleId])
 }
@@ -103,7 +102,7 @@ model UserEvent {
   user   User   @relation(fields: [userID], references: [collegeRegistrationID])
 
   eventID String
-  event   Event  @relation(fields: [eventID], references: [id])
+  event   Event  @relation(fields: [eventID], references: [id], onDelete: Cascade)
 
   @@id([userID, eventID])
 }

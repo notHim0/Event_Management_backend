@@ -1,6 +1,6 @@
 import { PrismaClient, Role, ClubRole } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
-import { roleSchema } from "../../utils/zodSchema";
+import { roleSchema } from "../utils/zodSchema";
 
 const prisma = new PrismaClient();
 

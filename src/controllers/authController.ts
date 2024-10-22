@@ -2,122 +2,94 @@ import { PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import express, { Request, Response } from "express";
+import AppError from "../AppError";
+import { userSchema } from "../utils/zodSchema";
+import z from "zod";
 const prisma = new PrismaClient();
 
 export async function signup(req: Request, res: Response) {
-  const formData: FormData = req.body;
+  const { collegeRegistrationID, firstName, lastName, password, instituteName, degree, course } = req.body;
 
-  try {
-    const isRegistered = await prisma.user.findUnique({
-      where: { collegeRegistrationID: formData["collegeRegistrationID"] },
-    });
+  const isRegistered = await prisma.user.findUnique({
+    where: { collegeRegistrationID: collegeRegistrationID },
+  });
 
-    if (!isRegistered) {
-      const hashedPassword = await bcrypt.hash(
-        formData["password"],
-        parseInt(process.env.SALT_ROUNDS)
-      );
+  if (isRegistered) throw new AppError("User with this registration ID already exists.", "USER_EXSITS", 409);
 
-      await prisma.user.create({
-        data: {
-          collegeRegistrationID: formData["collegeRegistrationID"],
-          firstName: formData["firstName"],
-          lastName: formData["lastName"] ? formData["lastName"] : null,
-          instituteName: formData["instituteName"],
-          degree: formData["degree"],
-          course: formData["course"],
-          password: hashedPassword,
-        },
-      });
+  const hashedPassword = await bcrypt.hash(
+    password,
+    parseInt(process.env.SALT_ROUNDS)
+  );
 
-      res.status(200).json({
-        status: "success",
-        error: null,
-        data: { code: "USER_REGISTERED" },
-      });
-    } else {
-      res.status(409).json({
-        status: "error",
-        error: {
-          code: "USER_ALREADY_EXISTS",
-        },
-        data: null,
-      });
-    }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: "error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
-      data: null,
-    });
-  }
+  const data: any = userSchema.parse({
+    collegeRegistrationID: collegeRegistrationID,
+    firstName: firstName,
+    lastName: lastName ? lastName : null,
+    instituteName: instituteName,
+    degree: degree,
+    course: course,
+    password: hashedPassword,
+  })
+
+  await prisma.user.create({
+    data
+  });
+
+  res.status(200).json({
+    status: "success",
+    error: null,
+    data: { code: "USER_REGISTERED" },
+  });
 }
 
 export async function login(req: Request, res: Response) {
-  const formData: FormData = req.body;
-  try {
-    const user: User = await prisma.user.findUnique({
-      where: {
-        collegeRegistrationID: formData["collegeRegistrationID"],
-      },
-    });
-    console.log(formData);
+  const { collegeRegistrationID, password } = req.body;
 
-    if (user) {
-      // If user exists
-      const result = await bcrypt.compare(formData["password"], user.password);
-      delete user.password;
+  const user: User = await prisma.user.findUnique({
+    where: {
+      collegeRegistrationID: collegeRegistrationID,
+    },
 
-      if (result) {
-        // If correct crendentials
-        const token = jwt.sign(
-          {
-            registrationID: user.collegeRegistrationID,
-          },
-          process.env.SALT_ROUNDS,
-          {
-            expiresIn: "30d",
-          }
-        );
-
-        return res.status(200).json({
-          status: "sucess",
-          error: null,
-          data: {
-            code: "SUCESSFULLY_LOGGED_IN",
-            value: {
-              user: { ...user },
-              token: token,
-            },
-          },
-        });
-      } else {
-        // If wrong password
-        return res.status(401).json({
-          status: "error",
-          error: {
-            code: "WRONG_CREDENTIAL",
-          },
-          data: null,
-        });
+    include: {
+      clubsAndRoles: {
+        select: {
+          club: true,
+          role: true,
+        }
       }
-    } else {
-      // If wrong regestrationID
-      return res.status(401).json({
-        status: "error",
-        error: {
-          code: "WRONG_CREDENTIAL",
+    }
+  });
+
+  if (user) {
+    // If user exists
+    const result = await bcrypt.compare(password, user.password);
+    delete user.password;
+
+    if (result) {
+      // If correct crendentials
+      const token = jwt.sign(
+        {
+          registrationID: user.collegeRegistrationID,
         },
-        data: null,
+        process.env.SALT_ROUNDS,
+        {
+          expiresIn: "30d",
+        }
+      );
+
+      return res.status(200).json({
+        status: "sucess",
+        error: null,
+        data: {
+          code: "SUCESSFULLY_LOGGED_IN",
+          value: {
+            user: { ...user },
+            token: token,
+          },
+        },
       });
     }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      status: "error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
-      data: null,
-    });
   }
+  throw new AppError("Invalid Registration ID or Password. Please check your details and try again.", "WRONG_CREDENTIAL", 401);
 }
+
