@@ -133,9 +133,6 @@ export async function joinClub(
   let { clubId } = req.query;
   clubId = clubId as string;
 
-
-  // console.log(clubId);
-
   const { roleId } = await prisma.clubRole.findFirst({
     where: {
       clubId,
@@ -149,9 +146,11 @@ export async function joinClub(
     },
   });
 
+  if (!roleId) throw new AppError("Unable to join the club", "UNABLE_TO_JOIN_CLUB", 404);
+
   await prisma.userClubRole.create({
     data: {
-      userId: req.body["serInfo"].id,
+      userId: req.body["userInfo"].id,
       clubId,
       roleId,
     },
@@ -159,7 +158,31 @@ export async function joinClub(
 
   return res.status(200).json({
     status: "success",
-    data: null,
+    data: { code: "SUCCESFULLY_JOINED_CLUB" },
+    error: null,
+  });
+
+
+}
+
+export async function leaveCLub(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const clubId = req.query.clubId.toString();
+
+
+  await prisma.userClubRole.deleteMany({
+    where: {
+      userId: req.body["userInfo"].id,
+      clubId: clubId,
+    },
+  });
+
+  return res.status(200).json({
+    status: "success",
+    data: { code: "SUCCESFULLY_LEFT_CLUB" },
     error: null,
   });
 
@@ -172,7 +195,10 @@ export async function addMembers(
   next: NextFunction
 ) {
   //ids for querying
-  const { clubId } = req.body;
+  let { clubId } = req.query;
+  clubId = clubId as string;
+
+
   const userId = req.body.userInfo.id;
   //be sure to also send the roleId since this is a protected route
 
@@ -184,31 +210,25 @@ export async function addMembers(
     },
   });
 
-  try {
-    if (!roleId) throw new Error("UNABLE TO ADD MEMBER");
 
-    //creating an entry in the junction table for the new member
-    await prisma.userClubRole.create({
-      data: {
-        clubId,
-        roleId,
-        userId,
-      },
-    });
+  if (!roleId) throw new AppError("Unable to add member", "MEMBER_DOESN'T_EXSIST", 404);
 
-    res.status(200).json({
-      status: "success",
-      error: null,
-      data: { code: "MEMBER_ADDED", message: "NEW MEMBER ADDED" },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      status: "error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
-      data: null,
-    });
-  }
+  //creating an entry in the junction table for the new member
+  await prisma.userClubRole.create({
+    data: {
+      clubId,
+      roleId,
+      userId,
+    },
+  });
+
+  res.status(200).json({
+    status: "success",
+    error: null,
+    data: { code: "MEMBER_ADDED", message: "NEW MEMBER ADDED" },
+  });
+
+
 }
 
 export async function assignRole(

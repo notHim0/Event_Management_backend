@@ -4,6 +4,7 @@ import {
   assignRole,
   createClub,
   joinClub,
+  leaveCLub,
   listAllClubs,
   listAllJoinedClubs,
   removeMember,
@@ -20,7 +21,8 @@ router.route("/api/create_club").post(auth, tryCatch(createClub));
 router.route("/api/list_all_clubs").get(auth, tryCatch(listAllClubs));
 router.route("/api/list_all_joined_clubs").get(auth, tryCatch(listAllJoinedClubs));
 router.route("/api/join_club").get(auth, tryCatch(joinClub));
-router.route("/api/club/add_members").post(auth, checkAccessLevel, addMembers);
+router.route("/api/leave_club").get(auth, tryCatch(leaveCLub));
+router.route("/api/club/add_members").post(auth, checkAccessLevel, tryCatch(addMembers));
 router.route("/api/club/assign_role").post(auth, checkAccessLevel, assignRole);
 router
   .route("/api/club/remove_member")
